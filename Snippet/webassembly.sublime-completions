@@ -1,0 +1,13 @@
+{
+    "scope":"source.wat",
+    "completions":[
+        {
+            "trigger":"f32","contents":"f32","kind":"type",
+            "trigger":"i32","contents":"i32","kind":"type",
+            "trigger":"i64","contents":"i64","kind":"type",
+            "trigger":"f64","contents":"f64","kind":"type",
+            "trigger":"f64","contents":"f64","kind":"type"
+        }
+    ]
+
+}

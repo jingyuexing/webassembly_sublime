@@ -1,0 +1,308 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+file_extensions:
+  - wast
+  - wat
+name: WebAssembly
+scope: source.wat
+variables:
+  types: ((i|f|u)(32|64)|v128|exnref|anyref|funcref|nullref)
+  buildin_class: (memory|(g)?local|table|elem|data)
+  hexNum: (?:0x[0-9a-fA-F])
+contexts:
+  main:
+    - include: WebAssemblyType
+    - include: WebAssemblyString
+    - include: WebAssemblyInstructions
+    - include: WebAssemblyModules
+    - include: WebAssemblyConstants
+    - include: WebAssemblyInvalid
+    - include: WebAssemblyComments
+  WebAssemblyComments:
+    # line comment
+    - match: (;;)
+      scope: punctuation.definition.comment.wat
+      push:
+        - meta_scope: comment.line.wat
+        - match: $
+          pop: true
+    # block comment
+    - match: \(;
+      scope: punctuation.definition.comment.begin.wat
+      push:
+        - meta_scope: comment.block.wat
+        - match: ;\)
+          scope: punctuation.definition.comment.end.wat
+          pop: true
+  WebAssemblyType:
+    - match: '{{types}}'
+      scope: support.type.wast entity.name.type.wat
+  WebAssemblyString:
+    - match: (")
+      scope: punctuation.definition.string.begin.wat
+      push:
+        - meta_scope: string.quoted.double.wat
+        - match: (")
+          scope: punctuation.definition.string.end.wat
+          pop: true
+        - include: string_escaped_char
+  string_escaped_char:
+    - match: \\(n|t|\\|'|"|[0-9a-fA-F]{2})
+      scope: constant.character.escape.wat
+    - match: \\.
+      scope: invalid.illegal.wat
+  WebAssemblyInvalid:
+    - match: '[^\s()]+'
+      scope: 'invalid.wat'
+  WebAssemblyConstants:
+    - match: \b(i8x16)(?:\s+({{hexNum}}){1,2}){16}\b
+      scope: constant.numeric.vector.wat
+      captures:
+        1: support.type.wat
+    ######################
+    - match: \b(i16x8)(?:\s+({{hexNum}}){1,4}){8}\b
+      scope: constant.numeric.vector.wat
+      captures:
+        1: support.type.wat
+    #####################
+    - match: \b(i32x4)(?:\s+{{hexNum}}{1,8}){4}\b
+      scope: constant.numeric.vector.wat
+      captures:
+        1: support.type.wat
+    ######################
+    - match: \b(i64x2)(?:\s+{{hexNum}}{1,16}){2}\b
+      scope: constant.numeric.vector.wat
+      captures:
+        1: support.type.wat
+    ##################
+    - match: \b[0-9][0-9]*(?:\.[0-9][0-9]*)?(?:[eE][+-]?[0-9]+)?\b
+      scope: constant.numeric.float.wat
+    #################
+    - match: \b(?:0x[0-9a-fA-F][0-9a-fA-F]*|\d[\d]*)\b
+      scope: constant.numeric.integer.wat
+    ################
+    - match: ({{buildin_class}})
+      scope: support.class.wat support.type.wat
+  WebAssemblyInstructions:
+    - match: \b(i32|i64)\.trunc_sat_f(?:32|64)_[su]\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    ######
+    - match: \b(i32)\.(?:extend(?:8|16)_s)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    ######
+    - match: \b(i64)\.(?:extend(?:8|16|32)_s)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #####
+    - match: \b(memory)\.(?:copy|fill|init|drop)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    ####
+    - match: \b(v128)\.(?:const|and|or|xor|not|andnot|bitselect|load|store)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    ####
+    - match: \b(i8x16)\.(?:splat|replace_lane|add|sub|mul|neg|shl|shr_[su]|eq|ne|lt_[su]|le_[su]|gt_[su]|ge_[su]|min_[su]|max_[su]|any_true|all_true|extract_lane_[su]|add_saturate_[su]|sub_saturate_[su]|avgr_u|narrow_i16x8_[su])\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    ######
+    - match: \b(i16x8)\.(?:splat|replace_lane|add|sub|mul|neg|shl|shr_[su]|eq|ne|lt_[su]|le_[su]|gt_[su]|ge_[su]|min_[su]|max_[su]|any_true|all_true|extract_lane_[su]|add_saturate_[su]|sub_saturate_[su]|avgr_u|load8x8_[su]|narrow_i32x4_[su]|widen_(low|high)_i8x16_[su])\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #####
+    - match: \b(i32x4)\.(?:splat|replace_lane|add|sub|mul|neg|shl|shr_[su]|eq|ne|lt_[su]|le_[su]|gt_[su]|ge_[su]|min_[su]|max_[su]|any_true|all_true|extract_lane|load16x4_[su]|trunc_sat_f32x4_[su]|widen_(low|high)_i16x8_[su])\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    ####
+    - match: \b(i64x2)\.(?:splat|replace_lane|add|sub|mul|neg|shl|shr_[su]|extract_lane|load32x2_[su])\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #####
+    - match: \b(f32x4)\.(?:splat|replace_lane|add|sub|mul|neg|extract_lane|eq|ne|lt|le|gt|ge|abs|min|max|div|sqrt|convert_i32x4_[su])\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(f64x2)\.(?:splat|replace_lane|add|sub|mul|neg|extract_lane|eq|ne|lt|le|gt|ge|abs|min|max|div|sqrt)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(v8x16)\.(?:load_splat|shuffle|swizzle)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(v16x8)\.load_splat\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(v32x4)\.load_splat\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(v64x2)\.load_splat\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(i32)\.(atomic)\.(?:load(?:8_u|16_u)?|store(?:8|16)?|wait|(rmw)\.(?:add|sub|and|or|xor|xchg|cmpxchg)|(rmw8|rmw16)\.(?:add_u|sub_u|and_u|or_u|xor_u|xchg_u|cmpxchg_u))\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+        2: support.class.wat
+        3: support.class.wat
+        4: support.class.wat
+    #######
+    - match: \b(i64)\.(atomic)\.(?:load(?:8_u|16_u|32_u)?|store(?:8|16|32)?|wait|(rmw)\.(?:add|sub|and|or|xor|xchg|cmpxchg)|(rmw8|rmw16|rmw32)\.(?:add_u|sub_u|and_u|or_u|xor_u|xchg_u|cmpxchg_u))\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+        2: support.class.wat
+        3: support.class.wat
+        4: support.class.wat
+    ########
+    - match: \b(atomic)\.(?:notify|fence)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    ########
+    - match: \bshared\b
+      scope: storage.modifier.wat
+    #########
+    - match: \b(ref)\.(?:null|is_null|func)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #########
+    - match: \b(table)\.(?:get|size|grow|fill|init|copy)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #########
+    - match: \b(?:anyref|funcref|nullref)\b
+      scope: entity.name.type.wat
+    ########
+    - match: \breturn_call(?:_indirect)?\b
+      scope: keyword.control.wat
+    ########
+    - match: \b(?:try|catch|throw|rethrow|br_on_exn)\b
+      scope: keyword.control.wat
+    ########
+    - match: (?<=\()event\b
+      scope: storage.type.wat
+    #######
+    - match: \b(i32|i64|f32|f64|anyref|funcref|nullref|exnref)\.(?:push|pop)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #######
+    - match: \b(i32)\.(?:load|load(?:8|16)(?:_[su])?|store(?:8|16)?)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(i64)\.(?:load|load(?:8|16|32)(?:_[su])?|store(?:8|16|32)?)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #######
+    - match: \b(f32|f64)\.(?:load|store)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    ########
+    - match: \b(memory)\.(?:size|grow)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.memory.wat
+    ########
+    - match: \b(offset|align)=\b
+      captures:
+        1: entity.other.attribute-name.wat
+    #######
+    - match: \b(local)\.(?:get|set|tee)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.local.wat
+    #######
+    - match: \b(global)\.(?:get|set)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.global.wat
+    #######
+    - match: \b(i32|i64)\.(const|eqz|eq|ne|lt_[su]|gt_[su]|le_[su]|ge_[su]|clz|ctz|popcnt|add|sub|mul|div_[su]|rem_[su]|and|or|xor|shl|shr_[su]|rotl|rotr)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #######
+    - match: \b(f32|f64)\.(const|eq|ne|lt|gt|le|ge|abs|neg|ceil|floor|trunc|nearest|sqrt|add|sub|mul|div|min|max|copysign)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.class.wat
+    #######
+    - match: \b(i32)\.(wrap_i64|trunc_(f32|f64)_[su]|reinterpret_f32)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #######
+    - match: \b(i64)\.(extend_i32_[su]|trunc_f(32|64)_[su]|reinterpret_f64)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #######
+    - match: \b(f32)\.(convert_i(32|64)_[su]|demote_f64|reinterpret_i32)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #######
+    - match: \b(f64)\.(convert_i(32|64)_[su]|promote_f32|reinterpret_i64)\b
+      scope: keyword.operator.word.wat
+      captures:
+        1: support.type.wat
+    #######
+    - match: \b(?:unreachable|nop|block|loop|if|else|end|br|br_if|br_table|return|call|call_indirect)\b
+      scope: keyword.control.flow.wat
+    #######
+    - match: \b(?:drop|select)\b
+      scope: keyword.operator.word.wat
+  WebAssemblyModules:
+    - match: \b(?<=\()(?:module|import|export|memory|data|table|elem|start|func|type|param|result|global|local)\b
+      scope: storage.type.wat
+    - match: (?<=\(data)\s+(passive)\b
+      captures:
+        1: storage.modifier.wat
+    - match: (?<=\()\s*(mut)\b
+      scope: storage.modifier.wat
+      captures:
+        1: storage.modifier.wat
+    - match: (?<=\(func|\(start|call|return_call|ref\.func)\s+(\$[0-9A-Za-z!#$%&'*+\-./:<=>?@\\^_`|~]*)
+      captures:
+        1: entity.name.function.wat
+    - match: \)\s+(\$[0-9A-Za-z!#$%&'*+\-./:<=>?@\\^_`|~]*)
+      captures:
+        1: entity.name.function.wat
+      push:
+        - match: \)
+          pop: true
+    - match: (?<=\s)\$[0-9A-Za-z!#$%&'*+\-./:<=>?@\\^_`|~]*
+      scope: entity.name.function.wat
+    - match: (?<=\(type)\s+(\$[0-9A-Za-z!#$%&'*+\-./:<=>?@\\^_`|~]*)
+      captures:
+        1: entity.name.function.wat
+    - match: \$[0-9A-Za-z!#$%&'*+\-./:<=>?@\\^_`|~]*\b
+      scope: variable.other.wat
